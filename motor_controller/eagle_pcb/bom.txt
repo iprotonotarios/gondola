@@ -1,0 +1,35 @@
+
+Part Value               Device              Package             Description                          MF MPN      OC_FARNELL OC_NEWARK PROD_ID    VALUE
+C1   100uF               CPOL-US153CLV-0605  153CLV-0605         POLARIZED CAPACITOR, American symbol                                                  
+C2   100uF               CPOL-US153CLV-0605  153CLV-0605         POLARIZED CAPACITOR, American symbol                                                  
+C3   100uF               CPOL-US153CLV-0605  153CLV-0605         POLARIZED CAPACITOR, American symbol                                                  
+C4   100uF               CPOL-US153CLV-0605  153CLV-0605         POLARIZED CAPACITOR, American symbol                                                  
+D1   1N4004              1N4004              DO41-10             DIODE                                                                                 
+F1   MFR500              PTCFUSE             MFR500              LITTLEFUSE                                                                            
+JP1                      PINHD-2X3           2X03                PIN HEADER                                                                            
+JP2                      PINHD-2X3           2X03                PIN HEADER                                                                            
+JP3                      PINHD-2X3           2X03                PIN HEADER                                                                            
+JP4                      PINHD-2X3           2X03                PIN HEADER                                                                            
+JP5  RJ45                RJ45-8PTH           RJ45-8              RJ45 Jack                                                             CONN-08506 RJ45 
+JP6  RJ45                RJ45-8PTH           RJ45-8              RJ45 Jack                                                             CONN-08506 RJ45 
+JP7  RJ45                RJ45-8PTH           RJ45-8              RJ45 Jack                                                             CONN-08506 RJ45 
+JP8  RJ45                RJ45-8PTH           RJ45-8              RJ45 Jack                                                             CONN-08506 RJ45 
+LED1                     LEDCHIP-LED0805     CHIP-LED0805        LED                                                                                   
+LED2                     LEDCHIP-LED0805     CHIP-LED0805        LED                                                                                   
+R1   100k                R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R2   100k                R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R3   100k                R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R4   100k                R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R5   10k                 R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R6   10k                 R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R7   10k                 R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R8   10k                 R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R9   1K                  R-US_R0805          R0805               RESISTOR, American symbol                                                             
+R10  4.7K                R-US_R0805          R0805               RESISTOR, American symbol                                                             
+S1                       31-XX               B3F-31XX            OMRON SWITCH                            B3F-3100 959704     36M3582                   
+U$1  A4988BREAKOUT       A4988BREAKOUT       A4988BREAKOUT                                                                                             
+U$2  A4988BREAKOUT       A4988BREAKOUT       A4988BREAKOUT                                                                                             
+U$3  A4988BREAKOUT       A4988BREAKOUT       A4988BREAKOUT                                                                                             
+U$4  A4988BREAKOUT       A4988BREAKOUT       A4988BREAKOUT                                                                                             
+U1   ARDUINO_MEGA_SHIELD ARDUINO_MEGA_SHIELD ARDUINO_MEGA_SHIELD                                                                                       
+X1   1751248             1751248             1751248             MKDS 1/ 2-3,5 Printklemme                        unknown    unknown                   
