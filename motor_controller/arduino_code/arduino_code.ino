@@ -1,3 +1,4 @@
+/*
 #define M0_ENABLE_PIN       54
 #define M0_STEP_PIN         55
 #define M0_DIR_PIN          56
@@ -13,68 +14,161 @@
 #define M3_ENABLE_PIN       63
 #define M3_STEP_PIN         64
 #define M3_DIR_PIN          65
+*/
+
+#define NUM_ANCHORS 4
+#define STEP_DELAY 1
+
+#define NUM_TIMESLOTS 200
+#define LEN_TIMESLOT (1000/NUM_TIMESLOTS)
+
+int enable_pin[] = {54, 57, 60, 63};
+int step_pin[] = {55, 58, 61, 64};
+int dir_pin[] = {56, 59, 62, 65};
 
 char command[100];
-int dist[5];
+long dist[NUM_ANCHORS+1];
+
+
+//long steps_map[NUM_ANCHORS][NUM_TIMESLOTS];
+//long steps_done[NUM_ANCHORS];
+
 
 void setup() 
 { 
   Serial.begin(9600);
-  pinMode(M0_STEP_PIN, OUTPUT);
-  pinMode(M0_DIR_PIN, OUTPUT);
-  pinMode(M0_ENABLE_PIN, OUTPUT);
- 
-  pinMode(M1_STEP_PIN, OUTPUT);
-  pinMode(M1_DIR_PIN, OUTPUT);
-  pinMode(M1_ENABLE_PIN, OUTPUT);
- 
-  pinMode(M2_STEP_PIN, OUTPUT);
-  pinMode(M2_DIR_PIN, OUTPUT);
-  pinMode(M2_ENABLE_PIN, OUTPUT);
-  
-  pinMode(M3_STEP_PIN, OUTPUT);
-  pinMode(M3_DIR_PIN, OUTPUT);
-  pinMode(M3_ENABLE_PIN, OUTPUT);
- 
-  digitalWrite(M0_ENABLE_PIN, LOW);  
-  digitalWrite(M1_ENABLE_PIN, LOW);  
-  digitalWrite(M2_ENABLE_PIN, LOW);  
-  digitalWrite(M3_ENABLE_PIN, LOW);
+
+  for(int i=0;i<NUM_ANCHORS;i++){
+    pinMode(enable_pin[i], OUTPUT);
+    pinMode(step_pin[i], OUTPUT);
+    pinMode(dir_pin[i], OUTPUT);
+    digitalWrite(enable_pin[i], LOW);
+  }
+
   
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
 }
 
-void travel(long x_dist, long y_dist, long z_dist, long e_dist, int step_delay)
+
+void travel(long* dist, long seconds)
 {
-  (x_dist < 0) ? digitalWrite(M0_DIR_PIN, HIGH):digitalWrite(M0_DIR_PIN, LOW);
-  (y_dist < 0) ? digitalWrite(M1_DIR_PIN, HIGH):digitalWrite(M1_DIR_PIN, LOW);
-  (z_dist < 0) ? digitalWrite(M2_DIR_PIN, HIGH):digitalWrite(M2_DIR_PIN, LOW);
-  (e_dist < 0) ? digitalWrite(M3_DIR_PIN, HIGH):digitalWrite(M3_DIR_PIN, LOW);
-  x_dist = abs(x_dist); y_dist = abs(y_dist); z_dist = abs(z_dist); e_dist = abs(e_dist);
+  int step_ms[NUM_ANCHORS];
+  int max_step_ms = 0;
   
-  step_delay = (step_delay < 100) ? 100:step_delay;
-  step_delay = (step_delay > 2000) ? 2000:step_delay;
+  for(int i=0;i<NUM_ANCHORS;i++){
+      if (dist[i] < 0) 
+        digitalWrite(dir_pin[i], HIGH);
+      else 
+        digitalWrite(dir_pin[i], LOW);  
+      dist[i] = abs(dist[i])*8;
+      step_ms[i] = (int)ceil((float)dist[i]/(seconds*200));
+      if (step_ms[i] > max_step_ms) 
+        max_step_ms = step_ms[i];
+    }
+/*
+  for(int a=0;a<NUM_ANCHORS;a++){
+      
+      if (dist[a] < 0) 
+        digitalWrite(dir_pin[a], HIGH);
+      else 
+        digitalWrite(dir_pin[a], LOW);  
+      
+      dist[a] = abs(dist[a])*8;
+      
+      for(int t=0;t<NUM_TIMESLOTS;t++){
+        steps_map[a][t] = (int)ceil((dist[a]*(t+1))/(float)NUM_TIMESLOTS);
+      }
+
+      steps_done[a]=0;
+      
+      //step_ms[i] = (int)ceil((float)dist[i]/(seconds*200));
+      //if (step_ms[i] > max_step_ms) 
+      //  max_step_ms = step_ms[i];
+    }
+
+  */  
+/*
+// for each millisecond, each motor make enough steps to consume its budget
+  long startTime = millis()+LEN_TIMESLOT;
   
-  long steps = max(x_dist,max(y_dist,max(z_dist,e_dist)));
-  steps = steps*16;
-    
-  for(long i=0; i<steps; i++)
+  //wait for the start of the next 10ms timeslot
+  while(millis()<=startTime);
+  
+  for(long t=0; t<NUM_TIMESLOTS; t++)
   {
-    if (i < x_dist*16) digitalWrite(M0_STEP_PIN    , HIGH);
-    if (i < y_dist*16) digitalWrite(M1_STEP_PIN    , HIGH);
-    if (i < z_dist*16) digitalWrite(M2_STEP_PIN    , HIGH);
-    if (i < e_dist*16) digitalWrite(M3_STEP_PIN    , HIGH);
-    delayMicroseconds(step_delay);
-    if (i < x_dist*16) digitalWrite(M0_STEP_PIN    , LOW);
-    if (i < y_dist*16) digitalWrite(M1_STEP_PIN    , LOW);
-    if (i < z_dist*16) digitalWrite(M2_STEP_PIN    , LOW);
-    if (i < e_dist*16) digitalWrite(M3_STEP_PIN    , LOW);
-    delayMicroseconds(step_delay);
- }
- 
-  if (steps) Serial.print("A");
+    
+    boolean done = false;
+
+//Serial.print("T");
+
+    while(!done){
+
+      //Serial.print("L");
+      
+      done = true;
+      
+      for(int a=0;a<NUM_ANCHORS;a++)
+        if ((steps_done[a] < steps_map[a][t]) && (dist[a]>0)) {
+          digitalWrite(step_pin[a], HIGH);
+          }
+      delayMicroseconds(STEP_DELAY);
+      
+      for(int a=0;a<NUM_ANCHORS;a++){
+
+         //Serial.print(steps_done[a]); 
+         //Serial.print("-");
+         //Serial.print(steps_map[a][t]);
+         //Serial.print(" ");
+         
+        if ((steps_done[a] < steps_map[a][t]) && (dist[a]>0)) {
+          digitalWrite(step_pin[a], LOW);
+          dist[a] = dist[a]-1;
+          steps_done[a] = steps_done[a]+1;
+          done = false;
+          
+          }
+      delayMicroseconds(STEP_DELAY);
+      }
+    }
+    //wait untile the millisecond is elapsed
+    while(millis()<=startTime+((t+2)*LEN_TIMESLOT));
+  }
+  */
+
+
+  // for each millisecond, each motor make enough steps to consume its budget
+  long startTime = (millis()/LEN_TIMESLOT)+1;
+  
+  //wait for the start of the next 10ms timeslot
+  while((millis()/LEN_TIMESLOT)<=startTime);
+  
+  for(long t=0; t<(seconds*NUM_TIMESLOTS); t++)
+  {
+    for(long s=0; s<max_step_ms; s++)
+    {
+      
+      for(int a=0;a<NUM_ANCHORS;a++)
+        if ((s < step_ms[a]) && (dist[a]>0)) {
+          digitalWrite(step_pin[a], HIGH);
+          }
+      delayMicroseconds(STEP_DELAY);
+      
+      for(int a=0;a<NUM_ANCHORS;a++)
+        if ((s < step_ms[a]) && (dist[a]>0)) {
+          digitalWrite(step_pin[a], LOW);
+          dist[a] = dist[a]-1;
+          }
+      delayMicroseconds(STEP_DELAY);
+      
+    }
+    //wait untile the millisecond is elapsed
+    while((millis()/LEN_TIMESLOT)<=startTime+t);
+  }
+  
+  Serial.print("A");
 }
+
 
 void loop() 
 {  
@@ -89,6 +183,6 @@ void loop()
       dist[s] =(int) 2*atof(cmd);
       cmd = strtok(NULL, ":");
     }    
-    travel(dist[0], dist[1], dist[2], dist[3], dist[4]/2);
+    travel(dist, dist[4]/2);
   }
 }
