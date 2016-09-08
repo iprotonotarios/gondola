@@ -1,8 +1,8 @@
 #define NUM_ANCHORS 4
 #define STEP_DELAY 1
 
-#define NUM_TIMESLOTS 200
-#define LEN_TIMESLOT (1000/NUM_TIMESLOTS)
+//#define NUM_TIMESLOTS 200
+//#define LEN_TIMESLOT (1000/NUM_TIMESLOTS)
 
 int enable_pin[] = {54, 57, 60, 63};
 int step_pin[] = {55, 58, 61, 64};
@@ -27,9 +27,59 @@ void setup()
   digitalWrite(13, HIGH);
 }
 
-
-void travel(long* dist, long seconds)
+void travel(long* dist, long ms)
 {
+
+  
+  float step_ms[NUM_ANCHORS];
+  float next_step[NUM_ANCHORS];
+  long startTime;
+  
+  for(int a=0;a<NUM_ANCHORS;a++){
+      if (dist[a] < 0) 
+        digitalWrite(dir_pin[a], HIGH);
+      else 
+        digitalWrite(dir_pin[a], LOW);  
+      dist[a] = abs(dist[a])*8; //adapt mm distance to steps
+      step_ms[a] = ((float)ms)/((float)dist[a]); // computes how frequently each stepper need to perform a step (a step event)
+      next_step[a] = 0.0;
+    }
+    
+  startTime = millis();
+  
+  //until the time is elapsed
+  while(millis()<=startTime+ms){
+    
+    for(int a=0;a<NUM_ANCHORS;a++){
+      // if we have passed a step event and we still have steps to do
+      if((millis()>startTime+(long)round(next_step[a])) && (dist[a]>0)){ 
+          digitalWrite(step_pin[a], HIGH); // start step trigger
+      }
+    }
+    delayMicroseconds(STEP_DELAY); //leave the pins up for abit in order to be detected
+    for(int a=0;a<NUM_ANCHORS;a++){
+      if((millis()>startTime+(long)round(next_step[a])) && (dist[a]>0)){
+          digitalWrite(step_pin[a], LOW); // stop step trigger
+          next_step[a]+=step_ms[a]; // store when the next step will be
+          dist[a] = dist[a]-1; // remove 1 step from our counter
+      }
+    }
+    
+  }
+  //TODO: check if we performed all steps
+  Serial.print("A");
+}
+/*
+void travel_old(long* dist, long seconds)
+{
+
+
+// TODO: for each stepp add to a float counter the slot budget (also float)
+// at each step, round the counter with floor() and execute the resulting amount of steps
+// remove the integer part from the counter and from the global number
+
+
+  
   int step_ms[NUM_ANCHORS];
   int max_step_ms = 0;
   
@@ -77,7 +127,7 @@ void travel(long* dist, long seconds)
   Serial.print("A");
 }
 
-
+*/
 void loop() 
 {  
   if (Serial.available() > 0)
