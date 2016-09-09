@@ -64,7 +64,7 @@ class Gondola{
   view.pushMatrix();
   view.translate(position.x,position.y,position.z);
   // TODO change color if the anchor is selected
-  view.box(10);
+  view.box(step_size);
   view.popMatrix();
   
   }

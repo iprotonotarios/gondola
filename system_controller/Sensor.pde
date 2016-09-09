@@ -24,6 +24,13 @@ public void sense(PVector _pos){
   }
   values.append(random(255));
   sensor_map.put(_pos,values); 
+  
+  //delay(1000);
+  
+  print("Sensing ");
+  print(values.get(values.size()-1));
+  print(" at position ");
+  println(_pos);
 }
 
 
@@ -38,7 +45,7 @@ for (Map.Entry sensor_point : sensor_map.entrySet()) {
   view.noStroke();
   view.pushMatrix();
   view.translate(_pos.x,_pos.y,_pos.z);
-  view.box(5);
+  view.box(step_size/2);
   view.popMatrix();
   view.noFill();
   view.stroke(255);

@@ -21,7 +21,7 @@ class Anchor {
     view.pushMatrix();
     view.translate(position.x,position.y,position.z);
     // TODO change color if the anchor is selected
-    view.box(10);
+    view.box(step_size);
     view.popMatrix();
     view.line(position.x,position.y,position.z,_gondola.x,_gondola.y,_gondola.z);
   }

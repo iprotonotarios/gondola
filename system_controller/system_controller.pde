@@ -4,10 +4,14 @@ import java.util.*;
 import peasy.*;
 import javax.swing.*;
 
+// define the size of boxes, keyboard steps and sensing area
+int step_size = 5;
+
 PeasyCam camera;
 float rotationX = 0.0;
 float rotationY = 0.0;
 float rotationStep = PI/30;
+double zoom = 800;
 
 // Serial connection with arduino and sensor node
 Serial arduinoPort = null;
@@ -44,8 +48,8 @@ void setup() {
   size(1280,768,P2D);
   frameRate(60);
 
-  g = new Gondola(new PVector(100.0,100.0,100.0));
-  w = new World(640.0,480.0,200.0);
+  g = new Gondola(new PVector(10.0,10.0,10.0));
+  w = new World(64.0,48.0,20.0);
   c = new Gui(new ControlP5(this),g);
   s = new Sensor();
   p = new ScriptPlayer();
@@ -59,9 +63,9 @@ void setup() {
 
   // Setup anchor points
   g.addAnchor(new Anchor (new PVector(0.0,0.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(0.0,480.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(640.0,0.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(640.0,480.0,0.0)));
+  g.addAnchor(new Anchor (new PVector(0.0,48.0,0.0)));
+  g.addAnchor(new Anchor (new PVector(64.0,0.0,0.0)));
+  g.addAnchor(new Anchor (new PVector(64.0,48.0,0.0)));
 
 
   // Get trace files
@@ -87,12 +91,12 @@ void draw() {
   // wait for Gondola to reach is destination, i.e. get an ACK (char 'A') from the arduino.
   if(g.isMoving()){
     if (simulation) {
-      g.destination_reached();
+      reached_destination();
     } else {
       while (arduinoPort.available() > 0) {
         int inByte = arduinoPort.read();
         if(inByte==65) {
-          g.destination_reached();
+          reached_destination();
           //move_gondola(c.isLoop());
         }
       }
@@ -111,7 +115,7 @@ void draw() {
   // draw gondola and anchors
   g.draw(view_3d);
   // draw sensed values
-  s.draw(view_3d);
+  if(c.isTracing())  s.draw(view_3d);
   
   isrotating = false;
   // rotate camera
@@ -144,7 +148,7 @@ void draw() {
     rotationY = 0;
   }
   // center the camera
-  camera.lookAt(w.xDim/2,w.yDim/2,w.zDim/2, 800,0);
+  camera.lookAt(w.xDim/2,w.yDim/2,w.zDim/2, zoom, 0);
   view_3d.endDraw();  
   // place 3D world into 2D window  
   image(view_3d, 280, 0); 
@@ -199,6 +203,16 @@ void controlEvent(ControlEvent theEvent) {
   
 }
 
+
+public void reached_destination(){
+  //update gondola's status
+  g.destination_reached();
+  //perform sensing
+  if (c.isSensing()){
+    s.sense(g.getPosition());
+  }
+}
+
 public void move_gondola(boolean _putback){
   
   if (!controllerConnected && !simulation) {
@@ -209,6 +223,11 @@ public void move_gondola(boolean _putback){
   PVector _pos = p.popPos(_putback);
   
   if (_pos == null) return;
+  
+  
+  float travel_distance = PVector.dist(g.getPosition(),_pos); //distance in cm
+  float speed = c.get_speed(); //speed in cm/s
+  float timebudget = travel_distance/speed;
   
   List<Float> distances = g.move(_pos);  
   if (distances == null) return;
@@ -221,7 +240,8 @@ public void move_gondola(boolean _putback){
     serial_output = serial_output + round(((Float)iterator.next())*20.0)/2.0 + ":";
   }
   // here we should compute the required moving time given the travel distance of gondola and the required speed. For now we just set the speed in motor ticks per second
-  serial_output = serial_output + c.get_speed() + "\n";
+  
+  serial_output = serial_output + round(timebudget*1000)*1.0 + "\n"; //time budget is give in ms
   print("To motor controller: "+ serial_output);
   if (!simulation) arduinoPort.write(serial_output);
   

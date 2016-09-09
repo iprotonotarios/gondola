@@ -18,7 +18,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
   }
   
   
-  boolean isTracing(){
+  boolean isSensing(){
   return experiment_settings.getArrayValue()[0]==1;
   }
  
@@ -26,7 +26,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
   return experiment_settings.getArrayValue()[1]==1;
   } 
  
-  boolean isLog(){
+  boolean isTracing(){
   return experiment_settings.getArrayValue()[2]==1;
   }
   
@@ -120,8 +120,9 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
   cp5.addNumberbox("gondola_speed")
      .setPosition(controls_offset_x+130,controls_offset_y)
      .setSize(110,20)
-     .setRange(0,1000)
-     .setValue(100)
+     .setRange(0.2,10)
+     .setScrollSensitivity(0.2)
+     .setValue(1)
      .setDirection(Controller.HORIZONTAL)
      .moveTo(manual_group)
      ;  
@@ -183,7 +184,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
      .setItemsPerRow(1)
      .addItem("Sense",0)
      .addItem("Loop",0)
-     .addItem("Log",0)
+     .addItem("Trace",0)
      .addItem("Play",0)
      .moveTo(script_group)
      .setItemsPerRow(2)
@@ -191,6 +192,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
      .setSpacingRow(10)
      ;     
   
+  experiment_settings.activate(2);
   experiment_settings.activate(3);
   
   controls_offset_y += 30;
@@ -256,17 +258,21 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(!isrotating) rotationX -= PI/2;}}, DOWN);   
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(!isrotating) rotationY += PI/2;}}, LEFT);   
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(!isrotating) rotationY -= PI/2;}}, RIGHT);   
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {zoom-=100; println(zoom);}}, 'F');      
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {zoom+=100; println(zoom);}}, 'V');      
+
+  
   
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.open(0);accordion.close(1,2,3);}}, '1');      
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.open(1);accordion.close(0,2,3);}}, '2');    
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.open(2);accordion.close(0,1,3);}}, '3');
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {accordion.open(3);accordion.close(0,1,2);}}, '4');
-  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_x").setValue(cp5.getController("gondola_x").getValue()+10);}}}, 'a' );  
-  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_x").setValue(cp5.getController("gondola_x").getValue()-10);}}}, 'z' );  
-  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_y").setValue(cp5.getController("gondola_y").getValue()-10);}}}, 's' );  
-  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_y").setValue(cp5.getController("gondola_y").getValue()+10);}}}, 'x' );  
-  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_z").setValue(cp5.getController("gondola_z").getValue()-10);}}}, 'd' );  
-  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_z").setValue(cp5.getController("gondola_z").getValue()+10);}}}, 'c' );  
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_x").setValue(cp5.getController("gondola_x").getValue()+step_size);}}}, 'a' );  
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_x").setValue(cp5.getController("gondola_x").getValue()-step_size);}}}, 'z' );  
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_y").setValue(cp5.getController("gondola_y").getValue()-step_size);}}}, 's' );  
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_y").setValue(cp5.getController("gondola_y").getValue()+step_size);}}}, 'x' );  
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_z").setValue(cp5.getController("gondola_z").getValue()-step_size);}}}, 'd' );  
+  cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){cp5.getController("gondola_z").setValue(cp5.getController("gondola_z").getValue()+step_size);}}}, 'c' );  
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){move(0);}}}, RETURN );  
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){move(0);}}}, ENTER );    
   cp5.mapKeyFor(new ControlKey() {public void keyEvent() {if(isManual()){sense(0);}}}, ' ' ); 

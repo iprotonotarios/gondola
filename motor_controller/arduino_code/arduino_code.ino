@@ -31,7 +31,7 @@ void travel(long* dist, long ms)
 {
 
   
-  float step_ms[NUM_ANCHORS];
+  float step_us[NUM_ANCHORS];
   float next_step[NUM_ANCHORS];
   long startTime;
   
@@ -41,26 +41,26 @@ void travel(long* dist, long ms)
       else 
         digitalWrite(dir_pin[a], LOW);  
       dist[a] = abs(dist[a])*8; //adapt mm distance to steps
-      step_ms[a] = ((float)ms)/((float)dist[a]); // computes how frequently each stepper need to perform a step (a step event)
+      step_us[a] = ((ms*1000.0)/(float)dist[a]); // computes how frequently each stepper need to perform a step (a step event)
       next_step[a] = 0.0;
     }
     
-  startTime = millis();
+  startTime = micros();
   
   //until the time is elapsed
-  while(millis()<=startTime+ms){
+  while(micros()<=startTime+(ms*1000)){
     
     for(int a=0;a<NUM_ANCHORS;a++){
       // if we have passed a step event and we still have steps to do
-      if((millis()>startTime+(long)round(next_step[a])) && (dist[a]>0)){ 
+      if((micros()>startTime+(long)round(next_step[a])) && (dist[a]>0)){ 
           digitalWrite(step_pin[a], HIGH); // start step trigger
       }
     }
     delayMicroseconds(STEP_DELAY); //leave the pins up for abit in order to be detected
     for(int a=0;a<NUM_ANCHORS;a++){
-      if((millis()>startTime+(long)round(next_step[a])) && (dist[a]>0)){
+      if((micros()>startTime+(long)round(next_step[a])) && (dist[a]>0)){
           digitalWrite(step_pin[a], LOW); // stop step trigger
-          next_step[a]+=step_ms[a]; // store when the next step will be
+          next_step[a]+=step_us[a]; // store when the next step will be
           dist[a] = dist[a]-1; // remove 1 step from our counter
       }
     }

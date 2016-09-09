@@ -23,21 +23,21 @@ class World{
     view.popMatrix();
     //draw coordinate system
     view.stroke(255, 0, 0);
-    view.line(0,0,0,100,0,0);
+    view.line(0,0,0,xDim/2,0,0);
     view.stroke(0, 255, 0);
-    view.line(0,0,0,0,100,0);
+    view.line(0,0,0,0,yDim/2,0);
     view.stroke(0, 0, 255);
-    view.line(0,0,0,0,0,100);
+    view.line(0,0,0,0,0,zDim/2);
     view.stroke(255);    
   }
   
   public void draw_coordinates(PGraphics _view, int offsetX, int offsetY){
   fill(255,0,0);   
-  text('x', offsetX + _view.screenX(100,0,0),offsetY + _view.screenY(100,0,0));
+  text('x', offsetX + _view.screenX(xDim/2,0,0),offsetY + _view.screenY(xDim/2,0,0));
   fill(0,255,0);   
-  text('y', offsetX + _view.screenX(0,100,0),offsetY + _view.screenY(0,100,0));
+  text('y', offsetX + _view.screenX(0,yDim/2,0),offsetY + _view.screenY(0,yDim/2,0));
   fill(0,0,255);   
-  text('z', offsetX + _view.screenX(0,0,100),offsetY + _view.screenY(0,0,100));
+  text('z', offsetX + _view.screenX(0,0,zDim/2),offsetY + _view.screenY(0,0,zDim/2));
   fill(255);
   }
 
