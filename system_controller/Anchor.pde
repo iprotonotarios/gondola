@@ -14,6 +14,9 @@ class Anchor {
   Float updateDistance(PVector gondola_position){
     Float old_distance = distance;
     distance = PVector.dist(gondola_position,position);
+    // note that the motor controller approximate the distance by 0.5mm. Therefore, we return a distance that take this approximation into account
+    // note also that in our system controller, we kkep the distances with the highest accuracy possible
+    //return ((round(distance*20.0)/2.0) - (round(old_distance*2.0)/2.0));
     return distance-old_distance;
   }
 

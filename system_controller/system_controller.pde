@@ -48,8 +48,8 @@ void setup() {
   size(1280,768,P2D);
   frameRate(60);
 
-  g = new Gondola(new PVector(10.0,10.0,10.0));
-  w = new World(64.0,48.0,20.0);
+  g = new Gondola(new PVector(100.0,100.0,100.0));
+  w = new World(640.0,480.0,200.0);
   c = new Gui(new ControlP5(this),g);
   s = new Sensor();
   p = new ScriptPlayer();
@@ -63,9 +63,9 @@ void setup() {
 
   // Setup anchor points
   g.addAnchor(new Anchor (new PVector(0.0,0.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(0.0,48.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(64.0,0.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(64.0,48.0,0.0)));
+  g.addAnchor(new Anchor (new PVector(0.0,480.0,0.0)));
+  g.addAnchor(new Anchor (new PVector(640.0,0.0,0.0)));
+  g.addAnchor(new Anchor (new PVector(640.0,480.0,0.0)));
 
 
   // Get trace files
@@ -236,12 +236,14 @@ public void move_gondola(boolean _putback){
   String serial_output = "";
   Iterator iterator = distances.iterator();
   while(iterator.hasNext()){
-    // output in mm (x10) and with a precision of 0.5 (multiply by 2, round, divide by 2)
-    serial_output = serial_output + round(((Float)iterator.next())*20.0)/2.0 + ":";
+    // output in mm and with a precision of 0.5
+    //serial_output = serial_output + round(((Float)iterator.next())*20.0)/2.0 + ":";
+    
+    serial_output = serial_output + ((Float)iterator.next())*10.0 + ":"; //return spooling distances in mm rather than cm 
   }
   // here we should compute the required moving time given the travel distance of gondola and the required speed. For now we just set the speed in motor ticks per second
   
-  serial_output = serial_output + round(timebudget*1000)*1.0 + "\n"; //time budget is give in ms
+  serial_output = serial_output + round(timebudget*1000)*1.0 + ":\n"; //time budget is give in ms
   print("To motor controller: "+ serial_output);
   if (!simulation) arduinoPort.write(serial_output);
   
