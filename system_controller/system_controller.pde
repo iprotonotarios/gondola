@@ -22,11 +22,11 @@ String[] serialPorts;
 //String script_lines[];
 
 // GUI
-Gondola g;
-World w;
-Gui c;
-Sensor s;
-ScriptPlayer p;
+Gondola gondola;
+World world;
+Gui gui;
+Sensor sensor;
+ScriptPlayer player;
 PGraphics view_3d;
 
 
@@ -36,7 +36,7 @@ boolean calibration = false;
 // Boot flag
 boolean booting = true;
 boolean controllerConnected = false;
-boolean sensorConnected = true;
+boolean sensorConnected = false;
 boolean sensing = false;
 boolean simulation = true;
 boolean isrotating = false;
@@ -48,24 +48,24 @@ void setup() {
   size(1280,768,P2D);
   frameRate(60);
 
-  g = new Gondola(new PVector(100.0,100.0,100.0));
-  w = new World(640.0,480.0,200.0);
-  c = new Gui(new ControlP5(this),g);
-  s = new Sensor();
-  p = new ScriptPlayer();
+  gondola = new Gondola(new PVector(110.5,82.0,53.0));
+  world = new World(150.0,120.0,100.0);
+  gui = new Gui(new ControlP5(this),gondola);
+  sensor = new Sensor();
+  player = new ScriptPlayer();
   
-  p.callOnChange("updatePositionList");
+  player.callOnChange("updatePositionList");
   // Create 3d view
   view_3d = createGraphics(1000, 768, P3D);  
-  camera = new PeasyCam(this,view_3d, w.xDim/2,w.yDim/2,w.zDim/2, 800);
+  camera = new PeasyCam(this,view_3d, world.xDim/2,world.yDim/2,world.zDim/2, 800);
   camera.setActive(false);
   camera.rotateX(PI/2);
 
   // Setup anchor points
-  g.addAnchor(new Anchor (new PVector(0.0,0.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(0.0,480.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(640.0,0.0,0.0)));
-  g.addAnchor(new Anchor (new PVector(640.0,480.0,0.0)));
+  gondola.addAnchor(new Anchor (new PVector(0.0,103.5,0.0)));
+  gondola.addAnchor(new Anchor (new PVector(147.5,115.0,0.0)));
+  gondola.addAnchor(new Anchor (new PVector(147.5,17.0,0.0)));
+  //gondola.addAnchor(new Anchor (new PVector(640.0,480.0,0.0)));
 
 
   // Get trace files
@@ -74,7 +74,7 @@ void setup() {
 
   // Connect to serial port
   serialPorts = Serial.list();
-  c.add_ports(serialPorts);
+  gui.add_ports(serialPorts);
   //  println(Serial.list());
   // Clear boot flag
   booting = false;
@@ -89,7 +89,7 @@ void draw() {
   
   
   // wait for Gondola to reach is destination, i.e. get an ACK (char 'A') from the arduino.
-  if(g.isMoving()){
+  if(gondola.isMoving()){
     if (simulation) {
       reached_destination();
     } else {
@@ -97,13 +97,13 @@ void draw() {
         int inByte = arduinoPort.read();
         if(inByte==65) {
           reached_destination();
-          //move_gondola(c.isLoop());
+          //move_gondola(gui.isLoop());
         }
       }
     }
   }
 
-  if(g.isIdle()) move_gondola(c.isLoop());
+  if(gondola.isIdle()) move_gondola(gui.isLoop());
   
   // Init 3D world
   view_3d.beginDraw();
@@ -111,11 +111,11 @@ void draw() {
   view_3d.lights();
   view_3d.stroke(255);
   // draw world
-  w.draw(view_3d);
+  world.draw(view_3d);
   // draw gondola and anchors
-  g.draw(view_3d);
+  gondola.draw(view_3d);
   // draw sensed values
-  if(c.isTracing())  s.draw(view_3d);
+  if(gui.isPlot())  sensor.draw(view_3d);
   
   isrotating = false;
   // rotate camera
@@ -148,11 +148,11 @@ void draw() {
     rotationY = 0;
   }
   // center the camera
-  camera.lookAt(w.xDim/2,w.yDim/2,w.zDim/2, zoom, 0);
+  camera.lookAt(world.xDim/2,world.yDim/2,world.zDim/2, zoom, 0);
   view_3d.endDraw();  
   // place 3D world into 2D window  
   image(view_3d, 280, 0); 
-  w.draw_coordinates(view_3d,280,0);
+  world.draw_coordinates(view_3d,280,0);
   
 }
 
@@ -161,7 +161,7 @@ void controlEvent(ControlEvent theEvent) {
   if (booting) return;
    
   // if the arduino port is selected
-  if(theEvent.isFrom(c.motorcontroller_ports)) {
+  if(theEvent.isFrom(gui.motorcontroller_ports)) {
     int port_idx = (int)theEvent.getGroup().getValue();
     if (port_idx == 0){
       simulation = true;
@@ -179,10 +179,11 @@ void controlEvent(ControlEvent theEvent) {
   }  
   
   // if the sensor port is selected
-  if(theEvent.isFrom(c.sensor_ports)) {
+  if(theEvent.isFrom(gui.sensor_ports)) {
     int port_idx = (int)theEvent.getGroup().getValue();
     if (port_idx == 0){
       sensing = false;
+      sensorConnected = false;
       println("No sensor connected");
       return;
     }
@@ -197,8 +198,8 @@ void controlEvent(ControlEvent theEvent) {
   } 
   
   // if the script checkbox is toggled
-   if (theEvent.isFrom(c.experiment_settings)) { 
-    p.setPlaying(c.isPlay()); //play
+   if (theEvent.isFrom(gui.experiment_settings)) { 
+    player.setPlaying(gui.isPlay()); //play
   }
   
 }
@@ -206,11 +207,9 @@ void controlEvent(ControlEvent theEvent) {
 
 public void reached_destination(){
   //update gondola's status
-  g.destination_reached();
+  gondola.destination_reached();
   //perform sensing
-  if (c.isSensing()){
-    s.sense(g.getPosition());
-  }
+  sense(0);
 }
 
 public void move_gondola(boolean _putback){
@@ -220,16 +219,16 @@ public void move_gondola(boolean _putback){
     return;
   }
   
-  PVector _pos = p.popPos(_putback);
+  PVector _pos = player.popPos(_putback);
   
   if (_pos == null) return;
   
   
-  float travel_distance = PVector.dist(g.getPosition(),_pos); //distance in cm
-  float speed = c.get_speed(); //speed in cm/s
+  float travel_distance = PVector.dist(gondola.getPosition(),_pos); //distance in cm
+  float speed = gui.get_speed(); //speed in cm/s
   float timebudget = travel_distance/speed;
   
-  List<Float> distances = g.move(_pos);  
+  List<Float> distances = gondola.move(_pos);  
   if (distances == null) return;
   
   // Compose output string (to motor controller)
@@ -258,13 +257,27 @@ public void move(int val) {
     return;
   }
 */  
-  p.addPos(c.get_position());
+  player.addPos(gui.get_position());
 
 }
 
 public void sense(int val) {
- if (g.isIdle()) s.sense(g.getPosition());
+  //this function can be triggered manually OR when gondola reaches a destination and the sense toggle is ON
+  if (gui.isSensing()){
+    gondola.setSensing(true); // does not allow gondola to move while sensing
+    sensor.clear(gondola.getPosition());
+    for (int i=0;i<1;i++){  //collect 10 samples
+        float _value;
+        if (sensorConnected)
+          _value = 0.0;
+        else
+          _value = (float)random(255);
+        sensor.sense(gondola.getPosition(),_value);
+    }
+    gondola.setSensing(false);
+  }
 }
+
 
 public void execute_script(int val) {
   /*
@@ -278,18 +291,18 @@ public void execute_script(int val) {
   // enqueue all positions
   for (int i = 0;i<script_lines.length;i++){
     String[] _xyz = split(script_lines[i], ' ');
-    g.enqueue_position (new PVector(float(_xyz[0]),float(_xyz[1]),float(_xyz[2])));
+    gondola.enqueue_position (new PVector(float(_xyz[0]),float(_xyz[1]),float(_xyz[2])));
     //println(script_lines[i]);
   }
   // move to the first position
-  move_gondola(c.isLoop());
+  move_gondola(gui.isLoop());
   */
 }
 
 public void calibrate(int val) {
-  g.move(c.get_position());
-  g.destination_reached();
-  c.set_position(c.get_position());
+  gondola.move(gui.get_position());
+  gondola.destination_reached();
+  gui.set_position(gui.get_position());
 }  
 
 public void load(int val){
@@ -302,11 +315,11 @@ void fileSelected(File selection) {
   } else {
     //println("User selected " + selection.getAbsolutePath());
     String[] script_lines = loadStrings(selection.getAbsolutePath());
-    c.script_positions.clear();
+    gui.script_positions.clear();
     for (int i = 0 ; i < script_lines.length; i++) {
-      c.script_positions.addItem(script_lines[i],i);
+      gui.script_positions.addItem(script_lines[i],i);
     }
-    c.script_positions.open();
+    gui.script_positions.open();
 
   }
     
@@ -314,16 +327,16 @@ void fileSelected(File selection) {
   } 
   
 public void updatePositionList(){
-   List<PVector> positions = p.getPositions();
-   c.script_positions.clear();
+   List<PVector> positions = player.getPositions();
+   gui.script_positions.clear();
 
    for (PVector _pos : positions) {
-      c.script_positions.addItem("x: " + _pos.x + " y:" + _pos.y + " z: " + _pos.z, 0);
+      gui.script_positions.addItem("x: " + _pos.x + " y:" + _pos.y + " z: " + _pos.z, 0);
     }
   
 }
 
 public void clear(int val){
-  c.script_positions.clear();
-  p.clearPositions();
+  gui.script_positions.clear();
+  player.clearPositions();
 }

@@ -15,14 +15,21 @@ Sensor(){
 public void senseN(PVector _pos, int _n){
 }
   
-public void sense(PVector _pos){
+public void clear(PVector _pos){
+sensor_map.remove(_pos);
+}
+
+public void sense(PVector _pos,float _val){
   FloatList values;
   if ( sensor_map.containsKey(_pos) ) {
     values = sensor_map.get(_pos);
   } else {
     values = new FloatList();
   }
-  values.append(random(255));
+  
+  //TODO update min and max sensed values!
+  
+  values.append(_val);
   sensor_map.put(_pos,values); 
   
   //delay(1000);
@@ -34,14 +41,67 @@ public void sense(PVector _pos){
 }
 
 
+// http://www.andrewnoske.com/wiki/Code_-_heatmaps_and_color_gradients
+// other gradients https://msdn.microsoft.com/en-us/library/mt712854.aspx
+private float[] getHeatmap(float _val){
+     
+  float[] rgb =    {0.0,0.0,0.0};
+  float[] red =    {0.0,0.0,1.0,1.0};
+  float[] green =  {0.0,1.0,1.0,0.0};
+  float[] blue =   {1.0,0.0,0.0,0.0};
+  int num_colors = 4;
+  int idx1;        // |-- Our desired color will be between these two indexes in "color".
+  int idx2;        // |
+  float fractBetween = 0.0;  // Fraction between "idx1" and "idx2" where our value is.
+
+  if(_val <= 0) {
+    idx1 = 0;
+    idx2 = 0;
+  }
+  else if(_val >= 1) {  
+    idx1 = num_colors-1;
+    idx2 = num_colors-1; 
+
+  }    // accounts for an input >=0
+  else {
+    _val = _val * (num_colors-1);        // Will multiply value by 3.
+    idx1  = floor(_val);                  // Our desired color will be after this index.
+    idx2  = idx1+1;                        // ... and before this index (inclusive).
+    fractBetween = _val - (1.0*idx1);    // Distance between the two indexes (0-1).  
+  }
+  rgb[0]   = red[idx1]*(1-fractBetween) + red[idx2]*fractBetween;
+  rgb[1]   = green[idx1]*(1-fractBetween) + green[idx2]*fractBetween;
+  rgb[2]   = blue[idx1]*(1-fractBetween) + blue[idx2]*fractBetween;
+  return rgb;
+}
+
 
 public void draw(PGraphics view){
-  
+
+float _max = -100000000.0;
+float _min = 100000000.0;
+
+// get the min and max median for all positions (this way we ignore outliers)
+for (Map.Entry sensor_point : sensor_map.entrySet()) {
+  FloatList _values = (FloatList)sensor_point.getValue();
+  _values.sort();
+  float _median = _values.get(floor(_values.size()/2));
+  if (_max < _median) _max = _median;
+  if (_min > _median) _min = _median;
+}
+
 for (Map.Entry sensor_point : sensor_map.entrySet()) {
   PVector _pos = (PVector)sensor_point.getKey();
   FloatList _values = (FloatList)sensor_point.getValue();
-  // draw sensor point
-  view.fill(_values.max());
+  float _median,greyscale;
+  float[] heatmap;
+  // compute median value and normalize color based on min and max median
+  _values.sort();
+  _median = _values.get(floor(_values.size()/2));
+  greyscale = round(((_median-_min)/(_max-_min))*255);
+  heatmap = getHeatmap(greyscale/255);
+  // draw sensor point  
+  view.fill(heatmap[0]*255,heatmap[1]*255,heatmap[2]*255);
   view.noStroke();
   view.pushMatrix();
   view.translate(_pos.x,_pos.y,_pos.z);
@@ -52,53 +112,8 @@ for (Map.Entry sensor_point : sensor_map.entrySet()) {
 }
 
 }
-private void heatmap(){
-  /*heat_map = new HashMap<PVector,float>();
-  for (Map.Entry sensor_point : sensor_map.entrySet()) {
-    PVector _pos = (PVector)sensor_point.getKey();
-    FloatList _values = (FloatList)sensor_point.getValue();
-    float _val = _values.max();
-  
-    _pos.x = (float)round(_pos.x);
-    _pos.y = (float)round(_pos.y);
-    _pos.z = (float)round(_pos.z);
-  
-     applyHeat(_pos);
-     
-     for (int _x = -1;i<=1;i++)
-       for(int _y = -1;j<=1;j++;){
-       PVector _v = new PVector()
-       }
-     
-    
-
- 
-    if ( sensor_map.containsKey(_pos) ) {
-      heat_map.put(_pos,sensor_map.get(_pos)+_val); 
-    } else {
-      heat_map.put(_pos,_val);
-    }
-    values.append(random(255));
-    heat_map.put(_pos,sensor_map.get(_pos)+_val); 
-    
-    
-  }  
-
-  */
-}
 
 
-private void applyHeat(PVector _pos, float _val){
-/*
-  if ( sensor_map.containsKey(_pos) ) {
-      heat_map.put(_pos,sensor_map.get(_pos)+_val); 
-  } else {
-      heat_map.put(_pos,_val);
-  }
-       
-  }  
-  */
-}
   
   
   

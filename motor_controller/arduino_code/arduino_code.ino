@@ -1,4 +1,4 @@
-#define NUM_ANCHORS 4
+#define NUM_ANCHORS 3
 #define STEP_DELAY 1
 
 int enable_pin[] = {54, 57, 60, 63};
@@ -37,9 +37,9 @@ void travel(long* dist, long ms)
 
   for(int a=0;a<NUM_ANCHORS;a++){
       if (dist[a] < 0) 
-        digitalWrite(dir_pin[a], HIGH);
+        digitalWrite(dir_pin[a], LOW);
       else 
-        digitalWrite(dir_pin[a], LOW);  
+        digitalWrite(dir_pin[a], HIGH);  
       dist[a] = abs(dist[a])*16; //multiply the step by the number of microsteps
       sum_dist += dist[a];
       step_done[a] = 0;  

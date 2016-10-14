@@ -1,4 +1,4 @@
 enum GondolaState
 {
-    IDLE,MOVING
+    IDLE,MOVING,SENSING
 };

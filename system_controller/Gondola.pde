@@ -16,6 +16,13 @@ class Gondola{
     return position;
   }
 
+  public void setSensing (boolean _sensing){
+  if (_sensing)
+    state = GondolaState.SENSING;
+  else
+    state = GondolaState.IDLE;
+  }
+
   public void addAnchor(Anchor _anchor){
     _anchor.updateDistance(position); //compute anchor's distance from gondola
     anchors.add(_anchor);

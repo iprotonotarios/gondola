@@ -26,7 +26,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
   return experiment_settings.getArrayValue()[1]==1;
   } 
  
-  boolean isTracing(){
+  boolean isPlot(){
   return experiment_settings.getArrayValue()[2]==1;
   }
   
@@ -111,7 +111,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
      .setPosition(controls_offset_x,controls_offset_y)
      .setSize(110,20)
      .setScrollSensitivity(0.1)
-     .setRange(0,w.xDim)
+     .setRange(0,world.xDim)
      .setDirection(Controller.HORIZONTAL)
      .setValue(_g.position.x)
      .moveTo(manual_group)
@@ -132,7 +132,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
      .setPosition(controls_offset_x,controls_offset_y)
      .setSize(110,20)
      .setScrollSensitivity(1.1)
-     .setRange(0,w.yDim)
+     .setRange(0,world.yDim)
      .setDirection(Controller.HORIZONTAL)
      .setValue(_g.position.y)
      .moveTo(manual_group)
@@ -156,7 +156,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
      .setPosition(controls_offset_x,controls_offset_y)
      .setSize(110,20)
      .setScrollSensitivity(1.1)
-     .setRange(0,w.zDim)
+     .setRange(0,world.zDim)
      .setDirection(Controller.HORIZONTAL)
      .setValue(_g.position.z)
      .moveTo(manual_group)
@@ -184,7 +184,7 @@ Group usb_group,calibration_group,manual_group,script_group,configuration_group;
      .setItemsPerRow(1)
      .addItem("Sense",0)
      .addItem("Loop",0)
-     .addItem("Trace",0)
+     .addItem("Plot",0)
      .addItem("Play",0)
      .moveTo(script_group)
      .setItemsPerRow(2)

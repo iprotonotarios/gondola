@@ -1,0 +1,5 @@
+anchor 1: 	0	103.5	0
+anchor 2: 	147.5	115	0
+anchor 3:	147.5	17	0
+
+gondola:	117	53	93
