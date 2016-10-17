@@ -10,11 +10,7 @@ Sensor(){
   //heat_map = new HashMap<PVector,float>();
 } 
   
-  
-//TODO add number of samples to be senses
-public void senseN(PVector _pos, int _n){
-}
-  
+    
 public void clear(PVector _pos){
 sensor_map.remove(_pos);
 }
@@ -26,14 +22,8 @@ public void sense(PVector _pos,float _val){
   } else {
     values = new FloatList();
   }
-  
-  //TODO update min and max sensed values!
-  
   values.append(_val);
   sensor_map.put(_pos,values); 
-  
-  //delay(1000);
-  
   print("Sensing ");
   print(values.get(values.size()-1));
   print(" at position ");
@@ -98,8 +88,8 @@ for (Map.Entry sensor_point : sensor_map.entrySet()) {
   // compute median value and normalize color based on min and max median
   _values.sort();
   _median = _values.get(floor(_values.size()/2));
-  greyscale = round(((_median-_min)/(_max-_min))*255);
-  heatmap = getHeatmap(greyscale/255);
+  greyscale = (_median-_min)/(_max-_min);
+  heatmap = getHeatmap(greyscale);
   // draw sensor point  
   view.fill(heatmap[0]*255,heatmap[1]*255,heatmap[2]*255);
   view.noStroke();
