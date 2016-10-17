@@ -1,79 +1,69 @@
-#define M0_ENABLE_PIN       54
-#define M0_STEP_PIN         55
-#define M0_DIR_PIN          56
+#define NUM_ANCHORS 3
+#define STEP_DELAY 1
 
-#define M1_ENABLE_PIN       57
-#define M1_STEP_PIN         58
-#define M1_DIR_PIN          59
+int enable_pin[] = {54, 57, 60, 63};
+int step_pin[] = {55, 58, 61, 64};
+int dir_pin[] = {56, 59, 62, 65};
 
-#define M2_ENABLE_PIN       60
-#define M2_STEP_PIN         61
-#define M2_DIR_PIN          62
+float spooled_float[NUM_ANCHORS];
 
-#define M3_ENABLE_PIN       63
-#define M3_STEP_PIN         64
-#define M3_DIR_PIN          65
-
-char command[100];
-int dist[5];
+char command[255];
+long dist_long[NUM_ANCHORS];
+float dist_float[NUM_ANCHORS];
+long time_budget;
 
 void setup() 
 { 
   Serial.begin(9600);
-  pinMode(M0_STEP_PIN, OUTPUT);
-  pinMode(M0_DIR_PIN, OUTPUT);
-  pinMode(M0_ENABLE_PIN, OUTPUT);
- 
-  pinMode(M1_STEP_PIN, OUTPUT);
-  pinMode(M1_DIR_PIN, OUTPUT);
-  pinMode(M1_ENABLE_PIN, OUTPUT);
- 
-  pinMode(M2_STEP_PIN, OUTPUT);
-  pinMode(M2_DIR_PIN, OUTPUT);
-  pinMode(M2_ENABLE_PIN, OUTPUT);
-  
-  pinMode(M3_STEP_PIN, OUTPUT);
-  pinMode(M3_DIR_PIN, OUTPUT);
-  pinMode(M3_ENABLE_PIN, OUTPUT);
- 
-  digitalWrite(M0_ENABLE_PIN, LOW);  
-  digitalWrite(M1_ENABLE_PIN, LOW);  
-  digitalWrite(M2_ENABLE_PIN, LOW);  
-  digitalWrite(M3_ENABLE_PIN, LOW);
+
+  for(int a=0;a<NUM_ANCHORS;a++){
+    pinMode(enable_pin[a], OUTPUT);
+    pinMode(step_pin[a], OUTPUT);
+    pinMode(dir_pin[a], OUTPUT);
+    digitalWrite(enable_pin[a], LOW);
+    spooled_float[a] = 0.0;
+  }
   
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
 }
 
-void travel(long x_dist, long y_dist, long z_dist, long e_dist, int step_delay)
+void travel(long* dist, long ms)
 {
-  (x_dist < 0) ? digitalWrite(M0_DIR_PIN, HIGH):digitalWrite(M0_DIR_PIN, LOW);
-  (y_dist < 0) ? digitalWrite(M1_DIR_PIN, HIGH):digitalWrite(M1_DIR_PIN, LOW);
-  (z_dist < 0) ? digitalWrite(M2_DIR_PIN, HIGH):digitalWrite(M2_DIR_PIN, LOW);
-  (e_dist < 0) ? digitalWrite(M3_DIR_PIN, HIGH):digitalWrite(M3_DIR_PIN, LOW);
-  x_dist = abs(x_dist); y_dist = abs(y_dist); z_dist = abs(z_dist); e_dist = abs(e_dist);
-  
-  step_delay = (step_delay < 100) ? 100:step_delay;
-  step_delay = (step_delay > 2000) ? 2000:step_delay;
-  
-  long steps = max(x_dist,max(y_dist,max(z_dist,e_dist)));
-  steps = steps*16;
-    
-  for(long i=0; i<steps; i++)
-  {
-    if (i < x_dist*16) digitalWrite(M0_STEP_PIN    , HIGH);
-    if (i < y_dist*16) digitalWrite(M1_STEP_PIN    , HIGH);
-    if (i < z_dist*16) digitalWrite(M2_STEP_PIN    , HIGH);
-    if (i < e_dist*16) digitalWrite(M3_STEP_PIN    , HIGH);
-    delayMicroseconds(step_delay);
-    if (i < x_dist*16) digitalWrite(M0_STEP_PIN    , LOW);
-    if (i < y_dist*16) digitalWrite(M1_STEP_PIN    , LOW);
-    if (i < z_dist*16) digitalWrite(M2_STEP_PIN    , LOW);
-    if (i < e_dist*16) digitalWrite(M3_STEP_PIN    , LOW);
-    delayMicroseconds(step_delay);
- }
- 
-  if (steps) Serial.print("A");
+  long startTime;
+  long sum_dist = 0;
+  long step_goal[NUM_ANCHORS];
+  long step_done[NUM_ANCHORS];
+
+  for(int a=0;a<NUM_ANCHORS;a++){
+      if (dist[a] < 0) 
+        digitalWrite(dir_pin[a], LOW);
+      else 
+        digitalWrite(dir_pin[a], HIGH);  
+      dist[a] = abs(dist[a])*16; //multiply the step by the number of microsteps
+      sum_dist += dist[a];
+      step_done[a] = 0;  
+    }
+  startTime = millis();
+
+  while ((millis() < (startTime+ms)) || (sum_dist>0)){
+    for(int a=0;a<NUM_ANCHORS;a++){
+      step_goal[a] = ceil(((float)((millis()-startTime)*dist[a]))/((float)ms));
+      if (step_goal[a]>dist[a]) step_goal[a]=dist[a];
+      if ((step_goal[a]>step_done[a])&&(step_done[a]<dist[a])){
+        digitalWrite(step_pin[a], HIGH);
+      }
+    }
+    delayMicroseconds(STEP_DELAY); //leave the pins up for abit in order to be detected
+    for(int a=0;a<NUM_ANCHORS;a++){
+      if ((step_goal[a]>step_done[a])&&(step_done[a]<dist[a])){
+          digitalWrite(step_pin[a], LOW); // stop step trigger
+          sum_dist = sum_dist -1;
+          step_done[a] = step_done[a]+1;
+      }
+    }
+  }
+  Serial.println("A"); //send an ACK to the system controller
 }
 
 void loop() 
@@ -81,14 +71,40 @@ void loop()
   if (Serial.available() > 0)
   {
     delay(1);
-    Serial.readBytesUntil('\n',command,100); //need at least 30!!
-    
+    Serial.readBytesUntil('\n',command,255); //NOTE THAT FOR A PROPER PARSING OUR STRING NEEDS TO TERMINATE WITH ':'
     char* cmd = strtok(command, ":");
-    for (int s=0; s<5; s++)
+    
+    for (int a=0;a<NUM_ANCHORS;a++)
     {
-      dist[s] =(int) 2*atof(cmd);
+      // we keep the quantity of spooled wire in floating point for precision
+      float old_spool = spooled_float[a];
+      dist_float[a] =atof(cmd);
+      cmd = strtok(NULL, ":");
+      spooled_float[a] += dist_float[a];
+      // the difference between the old distance and the new one is then reduced in precision (0.5mm=1step=1.8' - 100mm=200steps=360')
+      dist_long[a] = (long)(((round(spooled_float[a]*2.0)/2.0) - (round(old_spool*2.0)/2.0))*2);
+      /*
+      Serial.print(spooled_float[a]);
+      Serial.print("-");
+      Serial.print(dist_float[a]);
+      Serial.print("-");
+      Serial.println(dist_long[a]);
+      */
+    }    
+    time_budget =(long)atol(cmd);
+    cmd = strtok(NULL, ":");
+    travel(dist_long,time_budget);
+
+    
+    /*
+    for (int a=0;a<NUM_ANCHORS;a++)
+    {
+      dist[a] =(long)round(2*atof(cmd)); //distance can be provided with a precision up to 0.5mm. If we multiply by 2, we can use integer
       cmd = strtok(NULL, ":");
     }    
-    travel(dist[0], dist[1], dist[2], dist[3], dist[4]/2);
+    time_budget =(long)atol(cmd);
+    cmd = strtok(NULL, ":");
+    travel(dist_long,time_budget);
+    */
   }
 }

@@ -1,0 +1,11 @@
+system_controller/backup/Anchor.pde
+system_controller/backup/Gondola.pde
+system_controller/backup/GondolaState.java
+system_controller/backup/Gui.pde
+system_controller/backup/script.txt
+*.tmp
+system_controller/backup/Sensor.pde
+system_controller/backup/sketch.properties
+system_controller/backup/World.pde
+system_controller/backup/sensys_demo.pde
+system_controller/GUI_BUILDER_DATA/gui.ser.4.1
