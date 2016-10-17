@@ -48,7 +48,7 @@ void setup() {
   size(1280,768,P2D);
   frameRate(60);
 
-  gondola = new Gondola(new PVector(110.5,82.0,53.0));
+  gondola = new Gondola(new PVector(107,65.0,26.0));
   world = new World(150.0,120.0,100.0);
   gui = new Gui(new ControlP5(this),gondola);
   sensor = new Sensor();
@@ -191,7 +191,7 @@ void controlEvent(ControlEvent theEvent) {
       port_idx--;
       println("Set sensor port to "+serialPorts[port_idx]);
       if (sensorPort!= null) sensorPort.stop();
-      sensorPort = new Serial(this, serialPorts[port_idx], 9600);
+      sensorPort = new Serial(this, serialPorts[port_idx], 115200);
       sensorConnected = true;
       sensing = true;
     }
@@ -264,14 +264,37 @@ public void move(int val) {
 public void sense(int val) {
   //this function can be triggered manually OR when gondola reaches a destination and the sense toggle is ON
   if (gui.isSensing()){
+    int lf = 10;  
     gondola.setSensing(true); // does not allow gondola to move while sensing
     sensor.clear(gondola.getPosition());
-    for (int i=0;i<1;i++){  //collect 10 samples
-        float _value;
-        if (sensorConnected)
-          _value = 0.0;
-        else
+    
+    if (sensorConnected){
+      sensorPort.clear();  //clear previous data in the buffer
+      //print(sensorPort.readStringUntil(lf));
+    }
+    
+    for (int i=0;i<10;i++){  //collect 10 samples
+        float _value = 0.0;
+        if (sensorConnected){
+          //print("Listening ");
+          
+          while(sensorPort.available()<=0) delay(1); //wait for incoming data
+          
+          //if (sensorPort.available() > 0) {
+            //print(" IN ");
+            String _string = sensorPort.readStringUntil(lf);
+            //print(_string);
+            //print(" ");
+            if (_string != null) {
+              //print(_string);  // Prints String
+              _value = float(_string);  // Converts and prints float
+              //println(_value);
+            }
+          //}
+        }
+        else{
           _value = (float)random(255);
+        }
         sensor.sense(gondola.getPosition(),_value);
     }
     gondola.setSensing(false);
