@@ -61,7 +61,10 @@ class Anchor
      Serial.println(id);
   }
 
-
+  coordinate get_position(){
+    return anchor_position;
+  }
+  
   long missing_steps(){
     return steps_todo-steps_done;
     }
@@ -74,10 +77,10 @@ class Anchor
     digitalWrite(pin.en, LOW);
   }
   
-  void set_position(float _x, float _y, float _z, float _spooled)
+  void set_position(float _x, float _y, float _z, coordinate _gondola)
   {
     anchor_position = {_x,_y,_z};
-    spooled_distance = _spooled;
+    spooled_distance = euclidean_distance(_gondola,anchor_position);
   }
 
   void prepare_to_spool(coordinate new_position){
@@ -184,14 +187,17 @@ void setup()
 { 
 
   Serial.begin(115200);
+
+  gondola = new Gondola((coordinate){0.0,0.0,0.0});
  
   for(int a=0;a<NUM_ANCHORS;a++){
     anchors[a] = new Anchor(a);
     anchors[a]->set_pins(enable_pin[a],step_pin[a],dir_pin[a]);
-    anchors[a]->set_position(x[a],y[a],z[a],spooled[a]);
+    
+    anchors[a]->set_position(x[a],y[a],z[a],gondola->get_position());
+    //anchors[a]->set_position(x[a],y[a],z[a],spooled[a]);
   }
 
-  gondola = new Gondola((coordinate){0.0,0.0,0.0});
   
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
