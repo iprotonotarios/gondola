@@ -48,8 +48,8 @@ void setup() {
   size(1280,768,P2D);
   frameRate(60);
 
-  gondola = new Gondola(new PVector(107,65.0,26.0));
-  world = new World(150.0,120.0,100.0);
+  gondola = new Gondola(new PVector(100.2,350-193.7,250-115.2));
+  world = new World(200.0,350.0,250.0);
   gui = new Gui(new ControlP5(this),gondola);
   sensor = new Sensor();
   player = new ScriptPlayer();
@@ -62,9 +62,9 @@ void setup() {
   camera.rotateX(PI/2);
 
   // Setup anchor points
-  gondola.addAnchor(new Anchor (new PVector(0.0,103.5,0.0)));
-  gondola.addAnchor(new Anchor (new PVector(147.5,115.0,0.0)));
-  gondola.addAnchor(new Anchor (new PVector(147.5,17.0,0.0)));
+  gondola.addAnchor(new Anchor (new PVector(183.5,350-342.4,250-207.2)));
+  gondola.addAnchor(new Anchor (new PVector(180.1,350-105.2,250-233.6)));
+  gondola.addAnchor(new Anchor (new PVector(24.9,350-216.0,250-218.9)));
   //gondola.addAnchor(new Anchor (new PVector(640.0,480.0,0.0)));
 
 
