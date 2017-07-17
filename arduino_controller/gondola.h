@@ -170,8 +170,5 @@ class Anchor
       }
   }
 
-  void end_spooling(){
-    
-    }
   
 };

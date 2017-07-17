@@ -1,5 +1,5 @@
 # gondola
-A stand-alone version of Gondola for arduino mega
+A stand-alone version of Gondola for arduino mega (system controller and motor controller are both on the arduino)
 
 INSTALLATION
 - upload .ino to your Mega 

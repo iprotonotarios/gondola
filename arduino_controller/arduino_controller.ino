@@ -106,7 +106,8 @@ void loop()
   }
 
   gondola->set_position(new_position);
-  
+  Serial.print("Position reached");
+      
     if (DEBUG) {
     Serial.print("Spooling time ");
     Serial.print((millis()-start_time)/1000.0);
