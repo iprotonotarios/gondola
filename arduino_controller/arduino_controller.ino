@@ -10,6 +10,7 @@
  **/
 
 #include "config.h"
+//#include "config_wemos.h"
 #include "gondola.h"
 
 Anchor* anchors[NUM_ANCHORS];
@@ -29,8 +30,6 @@ void setup()
     anchors[a]->set_position(x[a],y[a],z[a],gondola->get_position());
   }
   
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, HIGH);
 }
 
 
@@ -50,7 +49,7 @@ void loop()
     // parse string on serial (later change it with command interpreter)
     // we expect 4 float: x, y, z, speed in cm/s
     char* cmd = strtok(command,TOKENS);
-
+    // TODO: handle situation where input < 4 floats!!
     new_position.x = atof(cmd);
     cmd = strtok(NULL,TOKENS); // in cm
     new_position.y = atof(cmd);
@@ -68,51 +67,51 @@ void loop()
       return;
     }
 
-
     // ACTUATE THE STEPPER MOTORS
-
-  long max_steps = 0;
+    long max_steps = 0;
   
-  for(int a=0;a<NUM_ANCHORS;a++){
-      anchors[a]->prepare_to_spool(new_position);
-      max_steps = MAX(anchors[a]->missing_steps(),max_steps);
+    for(int a=0;a<NUM_ANCHORS;a++){
+        anchors[a]->prepare_to_spool(new_position);
+        max_steps = MAX(anchors[a]->missing_steps(),max_steps);
+      }
+
+    if (DEBUG) {
+      Serial.print("Budget ");
+      Serial.print(travel_time);
+      Serial.print("s, Minimum ");
+      Serial.print(max_steps/2000.0); //each microsteps takes 0.5 ms 
+      Serial.println("s");
     }
-
-  if (DEBUG) {
-    Serial.print("Budget ");
-    Serial.print(travel_time);
-    Serial.print("s, Minimum ");
-    Serial.print(max_steps/2000.0); //each microsteps takes 0.5 ms 
-    Serial.println("s");
-  }
-
-  travel_time = MAX(travel_time,max_steps/2000.0); 
-    
-  start_time = millis();
-  travel_time *= 1000; //convert budget time in milliseconds
-
-  boolean steps_left = 1;
   
-  while ((millis() < (start_time+travel_time)) || steps_left>0){
-    steps_left = 0;
-    for(int a=0;a<NUM_ANCHORS;a++){
-      anchors[a]->start_step(start_time,travel_time);
-    }
-    delayMicroseconds(STEP_DELAY); //leave the pins up for abit in order to be detected
-    for(int a=0;a<NUM_ANCHORS;a++){
-      anchors[a]->end_step();
-      steps_left += anchors[a]->missing_steps();
-    }
-  }
+    travel_time = MAX(travel_time,max_steps/2000.0); 
+      
+    start_time = millis();
+    travel_time *= 1000; //convert budget time in milliseconds
 
-  gondola->set_position(new_position);
-  Serial.print("Position reached");
+    boolean steps_left = 1;
+
+    wdt_disable(); //we disable the watchdog, since the next loop can take tens of seconds   
+    while ((millis() < (start_time+travel_time)) || steps_left>0){
+      steps_left = 0;
+      for(int a=0;a<NUM_ANCHORS;a++){
+        anchors[a]->start_step(start_time,travel_time);
+      }
+      delayMicroseconds(STEP_DELAY); //leave the pins up for abit in order to be detected
+      for(int a=0;a<NUM_ANCHORS;a++){
+        anchors[a]->end_step();
+        steps_left += anchors[a]->missing_steps();
+      }
+    }
+    wdt_enable(1000); //re-enable watchdog
+
+    gondola->set_position(new_position);
+    Serial.println("Position reached");
       
     if (DEBUG) {
-    Serial.print("Spooling time ");
-    Serial.print((millis()-start_time)/1000.0);
-    Serial.print(", missing steps ");
-    Serial.println(steps_left);
+      Serial.print("Spooling time ");
+      Serial.print((millis()-start_time)/1000.0);
+      Serial.print(", missing steps ");
+      Serial.println(steps_left);
     }
 
 
